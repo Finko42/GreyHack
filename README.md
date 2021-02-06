@@ -1,2 +1,2 @@
 # GreyHack
-Public GreyHack scripts from RetardusInvctus#2526 on Discord.
+Public GreyHack scripts from RetardusInvictus#2526 on Discord.
