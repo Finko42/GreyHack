@@ -41,8 +41,6 @@ Blocks[-1] = Blocks[-1] + binaryEncode(msgLen, 20)
 
 
 addnc = function(a, b)
-	a = a[0:]
-	b = b[0:]
 	carry = 0
 	result = []
 	for i in range(a.len-1)
@@ -53,23 +51,17 @@ addnc = function(a, b)
 end function
 
 Ch = function(x, y, z)
-	x = x[0:]
-	y = y[0:]
-	z = z[0:]
 	result = []
 	for i in x.indexes
-		result = result + [(x[i] and y[i]) or ((not x[i]) and z[i])]
+		result = result + [x[i]*y[i] + z[i] - x[i]*z[i]]
 	end for
 	return result
 end function
 
 Maj = function(x, y, z)
-	x = x[0:]
-	y = y[0:]
-	z = z[0:]
 	result = []
 	for i in x.indexes
-		result = result + [(x[i] and y[i]) or (x[i] and z[i]) or (y[i] and z[i])]
+		result = result + [(x[i]*y[i] + x[i]*z[i] - y[i]*z[i])^2]
 	end for
 	return result
 end function
@@ -93,7 +85,6 @@ shr = function(bits, shifts)
 end function
 
 sigma0 = function(x)
-	x = x[0:]
 	a = rotr(x, 7)
 	b = rotr(x, 18)
 	c = shr(x, 3)
@@ -105,7 +96,6 @@ sigma0 = function(x)
 end function
 
 sigma1 = function(x)
-	x = x[0:]
 	a = rotr(x, 17)
 	b = rotr(x, 19)
 	c = shr(x, 10)
@@ -117,7 +107,6 @@ sigma1 = function(x)
 end function
 
 SIGMA0 = function(x)
-	x = x[0:]
 	a = rotr(x, 2)
 	b = rotr(x, 13)
 	c = rotr(x, 22)
@@ -129,7 +118,6 @@ SIGMA0 = function(x)
 end function
 
 SIGMA1 = function(x)
-	x = x[0:]
 	a = rotr(x, 6)
 	b = rotr(x, 11)
 	c = rotr(x, 25)
