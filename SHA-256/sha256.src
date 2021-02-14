@@ -45,7 +45,7 @@ addnc = function(a, b)
 	result = []
 	for i in range(a.len-1)
 		result = [((a[i] - b[i])^2 - carry)^2] + result
-		if (a[i] and b[i]) or (a[i] and carry) or (b[i] and carry) then carry = 1 else carry = 0
+		if a[i]+b[i]+carry > 1 then carry = 1 else carry = 0
 	end for
 	return result
 end function
