@@ -1,4 +1,4 @@
-// This is my attempt at making ECDSA using the "official" method
+// This is my attempt at making ECDSA using the official method
 // This implementation of ECDSA does not work but an unorthodox one might so feel free to try to make one yourself
 
 // The following functions should be used in conjunction with the main ECC functions
