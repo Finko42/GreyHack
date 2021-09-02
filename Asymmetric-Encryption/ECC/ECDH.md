@@ -12,6 +12,9 @@ pretty slow even for small curves (my computer took 15 seconds to calculate the 
 This means that my 27-bit ECDH implementation might actually be secure (enough) since it would take a beefy computer and probably a few days to figure the true order of a curve with a 
 27-bit p, and even then you could simply change curve parameters (just make sure your friends use the same parameters).
 
+TL;DR: Just calculating the order of the elliptic curve in my implementation is harder than using the normal cracking algorithms (Baby-step giant step and Pollard Rho are instant on my 
+computer) so my ECDH might be secure.
+
 Still, I wouldn't use this ECDH for anything really important.
 
 I haven't been able to get a [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) implementation working but you can look at ECDSAconcept.src for ideas.
