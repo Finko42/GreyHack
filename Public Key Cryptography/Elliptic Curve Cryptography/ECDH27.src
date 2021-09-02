@@ -1,4 +1,5 @@
-// See ECDHE27.txt for more details
+// WARNING: This implementation is NOT secure and shouldn't be used for anything serious
+// See ECDH.md for more details
 
 // Define the curve
 curve = {"a":0, "b":7, "n":94906249, "G":{"x":87908601, "y":6225285}, "p":94906249} // p = floor(sqrt(2^53)) - 16
@@ -8,8 +9,10 @@ curve = {"a":0, "b":7, "n":94906249, "G":{"x":87908601, "y":6225285}, "p":949062
 // n is not correct here but it doesn't matter (also good luck calculating it)
 // G is the base point (just a random point)
 // p is the finite field number (must be prime)
+// Feel free to modidify curve parameters (if you know what you're doing)
 
-bit_size = 27
+bit_size = 27 // Based on bit length of n
+
 // The main elliptic curve math functions
 modInverse = function(n, p)  // Returns multiplicative inverse of n mod p
 	if n < 0 then return p - modInverse(-n, p)
@@ -102,7 +105,7 @@ gen_keys = function()
 	exit("Public Key: (0x"+hex(public_key.x)+", 0x"+hex(public_key.y)+")")
 end function
 
-usage = "Usage:\nECDHE27 gen-keys\nECDHE27 sharedsecret <your private key> <friend's public key>"
+usage = "Usage:\nECDH27 gen-keys\nECDH27 sharedsecret <your private key> <friend's public key>"
 if params.len > 0 then
 	if params[0] == "-h" then exit(usage)
 	
