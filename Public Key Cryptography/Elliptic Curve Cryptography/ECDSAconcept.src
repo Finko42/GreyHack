@@ -1,0 +1,47 @@
+// This is my attempt at making ECDSA using the "official" method
+// This implementation of ECDSA does not work but an unorthodox one might so feel free to try to make one yourself
+
+// The following functions should be used in conjunction with the main ECC functions
+
+hash_message = function(msg)
+	return hex2int(slice(md5(msg), 0, ceil(globals.bit_size/4)))  // Use whatever hash you like (must be secure)
+end function
+
+sign_message = function(msg, private_key)
+	msg_hash = hash_message(msg)
+	r = 0
+	s = 0
+	
+	while not r or not s
+		k = floor(rnd * curve.n)+1
+		P = scalar_mult(k, curve.G)
+		r = P.x % curve.n
+		if r == 0 then continue
+		s = ((msg_hash + ((r * private_key) % curve.n) % curve.n) * modInverse(k, curve.n)) % curve.n
+	end while
+	
+	return {"x":r, "y":s}
+end function
+
+verify_sig = function(msg, signature, public_key)
+	msg_hash = hash_message(msg)
+	
+	w = modInverse(signature.y, curve.n)
+	u1 = (msg_hash * w) % curve.n
+	u2 = (msg_hash * w) % curve.n
+	
+	P = point_add(scalar_mult(u1, curve.G), scalar_mult(u2, public_key))
+	
+	if signature.x % curve.n == P.x % curve.n then return "Signature matches." else return "Invalid signature."
+end function
+
+if params.len > 0 then
+	if params[0] == "sign" then
+		Signature = sign_message(params[1], hex2int(params[2]))
+		exit("Signature: (0x"+hex(Signature.x)+", 0x"+hex(Signature.y)+")")
+	end if
+
+	if params[0] == "verify" then
+		exit(verify_sig(params[1], {"x":hex2int(params[2]), "y":hex2int(params[3])}, {"x":hex2int(params[4]), "y":hex2int(params[5])}))
+	end if
+end if
