@@ -1,8 +1,8 @@
 // This is my attempt at making ECDSA using the official method
 // This implementation of ECDSA does not work but an unorthodox one might so feel free to try to make one yourself
+// Although this probably just doesn't work because the curve order is incorrect
 
 // The following functions should be used in conjunction with the main ECC functions
-
 hash_message = function(msg)
 	return hex2int(slice(md5(msg), 0, ceil(globals.bit_size/4)))  // Use whatever hash you like (must be secure)
 end function
