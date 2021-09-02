@@ -14,6 +14,7 @@ curve = {"a":0, "b":7, "n":94906249, "G":{"x":87908601, "y":6225285}, "p":949062
 bit_size = 27 // Based on bit length of n
 
 // The main elliptic curve math functions
+// Points are represented using maps with x and y as indexes -> {"x":0, "y":0}
 modInverse = function(n, p)  // Returns multiplicative inverse of n mod p
 	if n < 0 then return p - modInverse(-n, p)
 	
