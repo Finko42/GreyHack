@@ -6,17 +6,15 @@ This shared secret can then be used as a symmetric key in a different algorithm.
 Elliptic curve cryptography is more secure than RSA, as 160-bit ECC is as secure as 1024-bit RSA.
 Here I have implemented it in GreyHack, although it is a 27-bit version and therefore shouldn't be secure (all 109-bit ECC and below are unsecure).
 
-***However***, in order to break ECC, you need to solve the discrete log problem for given curve parameters, which requires the correct curve order. Calculating the order of an
-elliptic curve is done by Schoof's algorithm or the Schoof–Elkies–Atkin algorithm. Unfortunately, even though these algorithms are faster than previous methods, they still are
-pretty slow even for small curves (my computer took 15 seconds to calculate the order of y^2 = x^3 + 2x + 3 GF(97)), which is why I didn't put the true curve order in the source code.
-This means that my 27-bit ECDH implementation might actually be secure (enough) since it would take a beefy computer and probably a few days to figure the true order of a curve with a 
-27-bit p, and even then you could simply change curve parameters (just make sure your friends use the same parameters).
+You may have noticed that the curve order is incorrect. This is because Schoof's algorithm is surprisingly slow even for small curves. I ran a python version of the algorithm
+(I couldn't get the more offical C++ implementation to work) for 24 hours and it still couldn't calculate the curve order. I recorded the time it took the algorithm to calculate
+a bunch of different p values for curves with the same a and b, graphed them on Desmos, and found the best case scenario being 109 days to calculate the correct curve order.
 
-TL;DR: Just calculating the order of the elliptic curve in my implementation is harder than using the normal cracking algorithms (Baby-step giant-step and Pollard Rho are instant on my 
-computer while I ran Schoof's algorithm for 24 hours trying to calculate the order of this implementation's curve and couldn't) so my ECDH might be secure.
-
-Still, I wouldn't use this ECDH for anything really important.
+This also means that using the regular cracking algorithms to break ECC (Baby-steps giant-steps and Pollard Rho) don't actually work because they require the correct curve order.
+Still, a person could still bruteforce a private key since it is only 27-bits.
 
 I haven't been able to get a [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) implementation working but you can look at ECDSAconcept.src for ideas.
+Most likely it won't work until the correct curve order is found, but if that happens the protocol can be cracked instantly anyways with one of the aforementioned cracking algorithms 
+(as long as a low bit curve order is used).
 
 To learn more about ECDH and ECDSA check out [this website](https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/).
