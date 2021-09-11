@@ -1,0 +1,12 @@
+// FNV-1a is a non-cryptographic hash function used for its speed and randomness
+// FNV-1a is NOT cryptographically secure and is not meant to be
+// This implementation does not produce the same hashes as its real life equivalent
+// but it still works fine as a speedy and low collision hash function
+
+FNV1a = function(input)  // Returns a 32-bit hash of input string (as an integer)
+	hash = 2166136261
+	for byte in input
+		hash = (bitwise("^", hash, code(byte)) * 16777619) % 4294967296
+	end for
+	return abs(hash)
+end function
