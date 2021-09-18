@@ -1,10 +1,5 @@
-input = params[0].trim
+input = params[0]
 if input.len > 124997 then exit("Input limited to 124,997 characters.")
-
-bytes = []
-for char in input
-	bytes = bytes + [code(char)]
-end for
 
 binaryEncode = function(num, bits)
 	result = []
@@ -16,12 +11,12 @@ end function
 
 Blocks = [[]]
 i=0
-for byte in bytes
+for char in input
 	if Blocks[i].len == 512 then
 		Blocks = Blocks + [[]]
 		i=i+1
 	end if
-	Blocks[i] = Blocks[i] + binaryEncode(byte, 8)
+	Blocks[i] = Blocks[i] + binaryEncode(code(char), 8)
 end for
 
 msgLen = 0
@@ -32,15 +27,15 @@ end for
 if Blocks[-1].len == 512 then Blocks = Blocks + [[]]
 Blocks[-1] = Blocks[-1] + [1]
 
-while Blocks[-1].len != 492
+while Blocks[-1].len != 489
 	if Blocks[-1].len == 512 then Blocks = Blocks + [[]]
 	Blocks[-1] = Blocks[-1] + [0]
 end while
 
-Blocks[-1] = Blocks[-1] + binaryEncode(msgLen, 20)  // Normally this is 64 bits but the max list size is 1 million
+Blocks[-1] = Blocks[-1] + binaryEncode(msgLen, 23)  // Normally this is 64 bits but the max list size is 1 million
 
 
-addnc = function(a, b)
+add = function(a, b)
 	carry = 0
 	result = []
 	for i in range(a.len-1)
@@ -155,7 +150,7 @@ for Block in Blocks
 	end for
 	
 	for i in range(16, 63)
-		W = W + [addnc(addnc(addnc(sigma1(W[i-2]), W[i-7]), sigma0(W[i-15])), W[i-16])]
+		W = W + [add(add(add(sigma1(W[i-2]), W[i-7]), sigma0(W[i-15])), W[i-16])]
 	end for
 	
 	a = H[0]
@@ -168,25 +163,25 @@ for Block in Blocks
 	h = H[7]
 	
 	for i in range(0, 63)
-		T1 = addnc(addnc(addnc(addnc(SIGMA1(e), Ch(e, f, g)), h), K[i]), W[i])
-		T2 = addnc(SIGMA0(a), Maj(a, b, c))
+		T1 = add(add(add(add(SIGMA1(e), Ch(e, f, g)), h), K[i]), W[i])
+		T2 = add(SIGMA0(a), Maj(a, b, c))
 		h = g
 		g = f
 		f = e
-		e = addnc(d, T1)
+		e = add(d, T1)
 		d = c
 		c = b
 		b = a
-		a = addnc(T1, T2)
+		a = add(T1, T2)
 	end for
-	H[0] = addnc(a, H[0])
-	H[1] = addnc(b, H[1])
-	H[2] = addnc(c, H[2])
-	H[3] = addnc(d, H[3])
-	H[4] = addnc(e, H[4])
-	H[5] = addnc(f, H[5])
-	H[6] = addnc(g, H[6])
-	H[7] = addnc(h, H[7])
+	H[0] = add(a, H[0])
+	H[1] = add(b, H[1])
+	H[2] = add(c, H[2])
+	H[3] = add(d, H[3])
+	H[4] = add(e, H[4])
+	H[5] = add(f, H[5])
+	H[6] = add(g, H[6])
+	H[7] = add(h, H[7])
 end for
 
 binHash = []
