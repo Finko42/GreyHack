@@ -1,5 +1,4 @@
-input = params[0]
-if input.len > 124997 then exit("Input limited to 124,997 characters.")
+input = params[0]  // Max input is 63,999,997 characters
 
 binaryEncode = function(num, bits)
 	result = []
