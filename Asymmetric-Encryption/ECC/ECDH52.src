@@ -1,0 +1,111 @@
+// WARNING: This implementation is NOT secure and shouldn't be used for anything serious
+// See ECDH.md for more details
+
+// Modular math functions
+mod_sub = function(m, s, mod)
+	return (((m - s) % mod) + mod) % mod
+end function
+
+mod_mult =function(x, y, mod)
+	result = 0
+	while x > 0 and y > 0
+		if y % 2 then result = (result + x) % mod
+		x = (x + x) % mod
+		y = floor(y/2)
+	end while
+	return result
+end function
+
+mod_exp = function(b, e, mod)
+	result = 1
+	while e > 0
+		if e % 2 then result = mod_mult(b, result, mod)
+		e = floor(e/2)
+		b = mod_mult(b, b, mod)
+	end while
+	return result
+end function
+
+mod_inv = function(n, mod)
+	return mod_exp(n, mod-2, mod)
+end function
+
+
+// Define the curve
+Curve = {"a":0, "b":7, "G":{"x":847300057733144, "y":3359535715354338}, "p":(2^52)-47}
+// y^2 = x^3 + ax + b  <- the curve equation (short Weierstrass curve)
+// G is the base point (random point on the curve)
+// p is finite field number (must be prime)
+// Feel free to modidify curve parameters (if you know what you're doing)
+
+// The main elliptic curve math functions
+// Points are represented using maps with x and y as indexes -> {"x":0, "y":0}
+point_add = function(p1, p2)
+	if (p1.x == 0) and (p1.y == 0) then return p2
+	if (p2.x == 0) and (p2.y == 0) then return p1
+	
+	if p1 == p2 then
+		m = mod_mult((mod_mult(mod_mult(p1.x, p1.x, Curve.p), 3, Curve.p)+Curve.a)%Curve.p, mod_inv(mod_mult(p1.y, 2, Curve.p), Curve.p), Curve.p)
+	else
+		m = mod_mult(mod_sub(p1.y, p2.y, Curve.p), mod_inv(mod_sub(p1.x, p2.x, Curve.p), Curve.p), Curve.p)
+	end if
+	
+	p3 = {}
+	p3["x"] = mod_sub(mod_sub(mod_mult(m, m, Curve.p), p1.x, Curve.p), p2.x, Curve.p)
+	p3["y"] = mod_sub(0, (p1.y+mod_mult(m, mod_sub(p3.x, p1.x, Curve.p), Curve.p))%Curve.p, Curve.p)
+	return p3
+end function
+
+scalar_mult = function(n, P)
+	result = {"x":0, "y":0}
+	D = P
+	while n
+		if n % 2 == 1 then result = point_add(result, D)
+		D = point_add(D, D)
+		n = floor(n/2)
+	end while
+	return result
+end function
+
+// Functions for keys
+dec2hex = function(num)
+	hexTable = "0123456789abcdef"
+	result = ""
+	for i in range(0, 12)
+		result = hexTable[floor(num/(16^i)) % 16] + result
+	end for
+	return result
+end function
+
+hex2dec = function(hex_num)
+	hexTable = "0123456789abcdef"
+	result = 0
+	hex_num = hex_num.values
+	hex_num.reverse
+	hex_num = hex_num.join("")
+	for i in hex_num.indexes
+		if hex_num[i] == "x" then continue
+		result = result + 16^i * hexTable.indexOf(hex_num[i])
+	end for
+	return result
+end function
+	
+gen_keys = function()
+	private_key = floor(rnd * 2^52)
+	if private_key < 2^51 then private_key = private_key + 2^51 // To help prevent timing attacks
+	print("Private Key: 0x"+dec2hex(private_key))
+	public_key = scalar_mult(private_key, Curve.G)
+	exit("Public Key: (0x"+dec2hex(public_key.x)+", 0x"+dec2hex(public_key.y)+")")
+end function
+
+usage = "Usage:\nECDH52 gen-keys\nECDH52 sharedsecret <your private key> <friend's public key>"
+if params.len > 0 then
+	if params[0] == "-h" then exit(usage)
+	if params[0] == "gen-keys" then gen_keys()
+	
+	if params[0] == "sharedsecret" then
+		ss = scalar_mult(hex2dec(params[1]), {"x":hex2dec(params[2]), "y":hex2dec(params[3])})
+		exit("Shared secret: (0x"+dec2hex(ss.x)+", 0x"+dec2hex(ss.y)+")")
+	end if
+end if
+exit(usage)
