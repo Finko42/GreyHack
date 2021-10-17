@@ -1,6 +1,6 @@
 # Advanced Encryption Standard
 
-AES is a cipher used to encode and decode messages using a symmetric key. I have implemented a 128-bit version that uses
+AES is a cipher used to encrypt and decrypt messages using a symmetric key. I have implemented the 128-bit version and it uses
 [CBC](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation).
 
 My implementation works the same as real life and is as secure as real life implementations of AES. The only unsecure part of my implementation is that it uses ``rnd()``, which is
