@@ -1,10 +1,11 @@
 // This uses CBC
 // Warning: A non-cryptographically secure random number generator is used
-// AES returns null if any error
 // Only accepts 16-character keys
-// Ciphertext must be a multiple of 32 characters long and in hexadecimal
+// Encrypted text is in base64
+// Plaintext can be any length < 1,000,000
 
-AES = function(choice, key, text)
+// Two choices: "encode" or "decode"
+AES128 = function(choice, key, text) // Returns null if any error (usually means undecryptable ciphertext)
 
 SBox = []
 SBox = SBox + [99, 124, 119, 123, 242, 107, 111, 197, 48, 1, 103, 43, 254, 215, 171, 118]
@@ -257,7 +258,7 @@ for column in key[0:4]
 	end for
 end for
 
-hexTable = "0123456789abcdef"
+b64Table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
 if choice == "encode" then
 	Blocks = [[]]
@@ -299,36 +300,93 @@ if choice == "encode" then
 		end for
 	end if
 	
-	// Convert blocks to hex
-	output = ""
+	// Convert blocks to array of bytes
+	arr = []
 	for Block in Blocks
 		for column in Block
 			for byte in column
-				for i in range(1)
-					output = output + hexTable[floor(byte/(16^i)) % 16]
-				end for
+				arr = arr + [byte]
 			end for
 		end for
+	end for
+	
+	// Convert array into base 64
+	output = ""
+	for i in range(0, arr.len-1, 3)
+		buffer = arr[i]*65536
+		if arr.hasIndex(i+1) then
+			buffer = buffer+arr[i+1]*256
+			if arr.hasIndex(i+2) then buffer = buffer+arr[i+2]
+		end if
+		
+		if arr.hasIndex(i+2) then
+			for j in range(3)
+				output = output + b64Table[floor(buffer/64^j)%64]
+			end for
+		else
+			if arr.hasIndex(i+1) then
+				for j in range(3,1)
+					output = output + b64Table[floor(buffer/64^j)%64]
+				end for
+			else
+				for j in range(3,2)
+					output = output + b64Table[floor(buffer/64^j)%64]
+				end for
+			end if
+		end if
 	end for
 	return output
 end if
 
 if choice == "decode" then
-	if text.len % 32 != 0 then return null
+	if text.len % 4 == 1 then return null
 	
+	// Convert base 64 into sextet array
+	sarr = text.values
+	for i in sarr.indexes
+		tmp = b64Table.indexOf(sarr[i])
+		if tmp == null then return null
+		sarr[i] = tmp
+	end for
+	
+	// Convert sextets to bytes
+	barr = []
+	for i in range(0, sarr.len-1, 4)
+		buffer = sarr[i]*262144
+		if sarr.hasIndex(i+1) then
+			buffer = buffer+sarr[i+1]*4096
+			if sarr.hasIndex(i+2) then
+				buffer = buffer+sarr[i+2]*64
+				if sarr.hasIndex(i+3) then buffer = buffer+sarr[i+3]
+			end if
+		end if
+		
+		if sarr.hasIndex(i+3) then
+			for j in range(2)
+				barr = barr + [floor(buffer/256^j)%256]
+			end for
+		else
+			if sarr.hasIndex(i+2) then
+				for j in range(2,1)
+					barr = barr + [floor(buffer/256^j)%256]
+				end for
+			else
+				barr = barr + [floor(buffer/65526)%256]
+			end if
+		end if
+	end for
+	
+	// Convert byte array to blocks
 	Blocks = [[]]
 	b=0
-	for i in range(0, text.len-1, 2)
-		first = hexTable.indexOf(text[i])
-		if first == null then return null
-		second = hexTable.indexOf(text[i+1])
-		if second == null then return null
+	while barr.len > 0
 		if Blocks[b].len == 16 then
 			Blocks = Blocks + [[]]
 			b=b+1
 		end if
-		Blocks[b] = Blocks[b] + [first*16+second]
-	end for
+		Blocks[b] = Blocks[b] + [barr.pull]
+	end while
+	if Blocks[-1].len != 16 then return null
 	
 	// Format blocks
 	for i in Blocks.indexes
@@ -359,24 +417,28 @@ if choice == "decode" then
 	
 	Blocks = NewBlocks[0:]
 	
-	// Convert blocks to text
-	output = []
+	// Convert blocks to array of bytes
+	arr = []
 	for Block in Blocks
 		for column in Block
 			for byte in column
-				output = output + [byte]
+				arr = arr + [byte]
 			end for
 		end for
 	end for
-	if output[-1] > 16 or output[-1] == 0 then return null
-	for i in range(output[-1]-1)
-		output.pop
+	
+	// Remove padding
+	if arr[-1] > 16 or arr[-1] == 0 then return null
+	for i in range(arr[-1]-1)
+		arr.pop
 	end for
-	result = ""
-	for byte in output
-		result = result + char(byte)
+	
+	// Convert array to text
+	output = ""
+	for byte in arr
+		output = output + char(byte)
 	end for
-	return result
+	return output
 end if
 
 return null
@@ -388,4 +450,7 @@ cmds = ["encode", "decode"]
 if params.len != 3 then exit(usage)
 if cmds.indexOf(params[0]) == null then exit(usage)
 if params[1].len != 16 then exit("Error: Key must be 16 characters long.")
-exit("Result: "+AES(params[0], params[1], params[2]))
+r = AES128(params[0], params[1], params[2])
+if typeof(r) == "null" then r = "Error"
+print("Result: "+r)
+print("Time: "+time+" seconds.")
