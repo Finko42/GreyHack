@@ -1,0 +1,391 @@
+// This uses CBC
+// Warning: A non-cryptographically secure random number generator is used
+// AES returns null if any error
+// Only accepts 16-character keys
+// Ciphertext must be a multiple of 32 characters long and in hexadecimal
+
+AES = function(choice, key, text)
+
+SBox = []
+SBox = SBox + [99, 124, 119, 123, 242, 107, 111, 197, 48, 1, 103, 43, 254, 215, 171, 118]
+SBox = SBox + [202, 130, 201, 125, 250, 89, 71, 240, 173, 212, 162, 175, 156, 164, 114, 192]
+SBox = SBox + [183, 253, 147, 38, 54, 63, 247, 204, 52, 165, 229, 241, 113, 216, 49, 21]
+SBox = SBox + [4, 199, 35, 195, 24, 150, 5, 154, 7, 18, 128, 226, 235, 39, 178, 117]
+SBox = SBox + [9, 131, 44, 26, 27, 110, 90, 160, 82, 59, 214, 179, 41, 227, 47, 132]
+SBox = SBox + [83, 209, 0, 237, 32, 252, 177, 91, 106, 203, 190, 57, 74, 76, 88, 207]
+SBox = SBox + [208, 239, 170, 251, 67, 77, 51, 133, 69, 249, 2, 127, 80, 60, 159, 168]
+SBox = SBox + [81, 163, 64, 143, 146, 157, 56, 245, 188, 182, 218, 33, 16, 255, 243, 210]
+SBox = SBox + [205, 12, 19, 236, 95, 151, 68, 23, 196, 167, 126, 61, 100, 93, 25, 115]
+SBox = SBox + [96, 129, 79, 220, 34, 42, 144, 136, 70, 238, 184, 20, 222, 94, 11, 219]
+SBox = SBox + [224, 50, 58, 10, 73, 6, 36, 92, 194, 211, 172, 98, 145, 149, 228, 121]
+SBox = SBox + [231, 200, 55, 109, 141, 213, 78, 169, 108, 86, 244, 234, 101, 122, 174, 8]
+SBox = SBox + [186, 120, 37, 46, 28, 166, 180, 198, 232, 221, 116, 31, 75, 189, 139, 138]
+SBox = SBox + [112, 62, 181, 102, 72, 3, 246, 14, 97, 53, 87, 185, 134, 193, 29, 158]
+SBox = SBox + [225, 248, 152, 17, 105, 217, 142, 148, 155, 30, 135, 233, 206, 85, 40, 223]
+SBox = SBox + [140, 161, 137, 13, 191, 230, 66, 104, 65, 153, 45, 15, 176, 84, 187, 22]
+
+InvSBox = []
+InvSBox = InvSBox + [82, 9, 106, 213, 48, 54, 165, 56, 191, 64, 163, 158, 129, 243, 215, 251]
+InvSBox = InvSBox + [124, 227, 57, 130, 155, 47, 255, 135, 52, 142, 67, 68, 196, 222, 233, 203]
+InvSBox = InvSBox + [84, 123, 148, 50, 166, 194, 35, 61, 238, 76, 149, 11, 66, 250, 195, 78]
+InvSBox = InvSBox + [8, 46, 161, 102, 40, 217, 36, 178, 118, 91, 162, 73, 109, 139, 209, 37]
+InvSBox = InvSBox + [114, 248, 246, 100, 134, 104, 152, 22, 212, 164, 92, 204, 93, 101, 182, 146]
+InvSBox = InvSBox + [108, 112, 72, 80, 253, 237, 185, 218, 94, 21, 70, 87, 167, 141, 157, 132]
+InvSBox = InvSBox + [144, 216, 171, 0, 140, 188, 211, 10, 247, 228, 88, 5, 184, 179, 69, 6]
+InvSBox = InvSBox + [208, 44, 30, 143, 202, 63, 15, 2, 193, 175, 189, 3, 1, 19, 138, 107]
+InvSBox = InvSBox + [58, 145, 17, 65, 79, 103, 220, 234, 151, 242, 207, 206, 240, 180, 230, 115]
+InvSBox = InvSBox + [150, 172, 116, 34, 231, 173, 53, 133, 226, 249, 55, 232, 28, 117, 223, 110]
+InvSBox = InvSBox + [71, 241, 26, 113, 29, 41, 197, 137, 111, 183, 98, 14, 170, 24, 190, 27]
+InvSBox = InvSBox + [252, 86, 62, 75, 198, 210, 121, 32, 154, 219, 192, 254, 120, 205, 90, 244]
+InvSBox = InvSBox + [31, 221, 168, 51, 136, 7, 199, 49, 177, 18, 16, 89, 39, 128, 236, 95]
+InvSBox = InvSBox + [96, 81, 127, 169, 25, 181, 74, 13, 45, 229, 122, 159, 147, 201, 156, 239]
+InvSBox = InvSBox + [160, 224, 59, 77, 174, 42, 245, 176, 200, 235, 187, 60, 131, 83, 153, 97]
+InvSBox = InvSBox + [23, 43, 4, 126, 186, 119, 214, 38, 225, 105, 20, 99, 85, 33, 12, 125]
+
+Rcon = [1, 2, 4, 8, 16, 32, 64, 128, 27, 54]
+
+SubBytes = function(column)
+	column = column[0:]
+	for i in column.indexes
+		column[i] = SBox[column[i]]
+	end for
+	return column
+end function
+
+Mult2 = function(byte) // Multiplies by 2 in GF(2^8)
+	hiBit = floor(byte/128)
+	byte = (byte * 2) % 256
+	if hiBit then byte = bitwise("^", byte, 27)
+	return byte
+end function
+
+RotWord = function(word)
+	return word[1:] + [word[0]]
+end function
+
+WordXor = function(word1, word2)
+	result = [0, 0, 0, 0]
+	for i in result.indexes
+		result[i] = bitwise("^", word1[i], word2[i])
+	end for
+	return result
+end function
+
+AddRoundKey = function(state, key, roundNum)
+	roundKey = key[roundNum*4:roundNum*4+4]
+	return [WordXor(state[0], roundKey[0]), WordXor(state[1], roundKey[1]), WordXor(state[2], roundKey[2]), WordXor(state[3], roundKey[3])]
+end function
+
+ExpandKey = function(key)
+	// Convert key into ascii
+	decKey = []
+	for char in key
+		decKey = decKey + [code(char)]
+	end for
+	
+	W = [decKey[0:4], decKey[4:8], decKey[8:12], decKey[12:16]]
+	
+	for i in range(4, 40, 4)
+		W = W + [[], [], [], []]
+		W[i] = RotWord(W[i-1])
+		W[i] = SubBytes(W[i])
+		W[i] = WordXor(W[i-4], W[i])
+		W[i][0] = bitwise("^", Rcon[i/4-1], W[i][0])
+		for j in range(i+1, i+3)
+			W[j] = WordXor(W[j-4], W[j-1])
+		end for
+	end for
+	return W
+end function
+
+aesEncode = function(key, block) // Expects already formatted block
+	key = key[0:]
+	State = block[0:]
+	
+	// Declaring functions
+	ShiftRows = function(state)
+		state = state[0:]
+		tmp = state[0][1]
+		state[0][1] = state[1][1]
+		state[1][1] = state[2][1]
+		state[2][1] = state[3][1]
+		state[3][1] = tmp
+		
+		for i in range(1)
+			tmp = state[0][2]
+			state[0][2] = state[1][2]
+			state[1][2] = state[2][2]
+			state[2][2] = state[3][2]
+			state[3][2] = tmp
+		end for
+		
+		tmp = state[3][3]
+		state[3][3] = state[2][3]
+		state[2][3] = state[1][3]
+		state[1][3] = state[0][3]
+		state[0][3] = tmp
+		return state
+	end function
+	
+	matrix = [[2, 3, 1, 1], [1, 2, 3, 1], [1, 1, 2, 3], [3, 1, 1, 2]]
+	
+	MixColumns = function(state)
+		state = state[0:]
+		for column in state.indexes
+			endcolumn = [0, 0, 0, 0]
+			for i in matrix.indexes
+				tmp = state[column][0:]
+				for j in matrix[i].indexes
+					if matrix[i][j] == 1 then continue
+					tmp[j] = Mult2(state[column][j])
+					if matrix[i][j] != 3 then continue
+					tmp[j] = bitwise("^", tmp[j], state[column][j])
+				end for
+				endcolumn[i] = bitwise("^", bitwise("^", bitwise("^", tmp[0], tmp[1]), tmp[2]), tmp[3])
+			end for
+			state[column] = endcolumn[0:]
+		end for
+		return state
+	end function
+	
+	// Now for the real algorithm
+	State = AddRoundKey(State, key, 0)
+	
+	for round in range(1, 9)
+		State = [SubBytes(State[0]), SubBytes(State[1]), SubBytes(State[2]), SubBytes(State[3])]
+		State = ShiftRows(State)
+		State = MixColumns(State)
+		State = AddRoundKey(State, key, round)
+	end for
+		
+	State = [SubBytes(State[0]), SubBytes(State[1]), SubBytes(State[2]), SubBytes(State[3])]
+	State = ShiftRows(State)
+	State = AddRoundKey(State, key, 10)
+	
+	return State
+end function
+
+
+aesDecode = function(key, block) // Expects already formatted block
+	key = key[0:]
+	State = block[0:]
+	
+	// Declare functions
+	InvShiftRows = function(state)
+		state = state[0:]
+		tmp = state[3][1]
+		state[3][1] = state[2][1]
+		state[2][1] = state[1][1]
+		state[1][1] = state[0][1]
+		state[0][1] = tmp
+		
+		for i in range(1)
+			tmp = state[3][2]
+			state[3][2] = state[2][2]
+			state[2][2] = state[1][2]
+			state[1][2] = state[0][2]
+			state[0][2] = tmp
+		end for
+		
+		tmp = state[0][3]
+		state[0][3] = state[1][3]
+		state[1][3] = state[2][3]
+		state[2][3] = state[3][3]
+		state[3][3] = tmp
+		return state
+	end function
+	
+	InvSubBytes = function(column)
+		column = column[0:]
+		for i in column.indexes
+			column[i] = InvSBox[column[i]]
+		end for
+		return column
+	end function
+	
+	matrix = [[14, 11, 13, 9], [9, 14, 11, 13], [13, 9, 14, 11], [11, 13, 9, 14]]
+	
+	InvMixColumns = function(state)
+		state = state[0:]
+		for column in state.indexes
+			endcolumn = [0, 0, 0, 0]
+			for i in matrix.indexes
+				tmp = state[column][0:]
+				for j in matrix[i].indexes
+					if matrix[i][j] == 9 then
+						tmp[j] = bitwise("^", Mult2(Mult2(Mult2(state[column][j]))), state[column][j])
+					else if matrix[i][j] == 11 then
+						tmp[j] = bitwise("^", Mult2(bitwise("^", Mult2(Mult2(state[column][j])), state[column][j])), state[column][j])
+					else if matrix[i][j] == 13 then
+						tmp[j] = bitwise("^", Mult2(Mult2(bitwise("^", Mult2(state[column][j]), state[column][j]))), state[column][j])
+					else
+						tmp[j] = Mult2(bitwise("^", Mult2(bitwise("^", Mult2(state[column][j]), state[column][j])), state[column][j]))
+					end if
+				end for
+				endcolumn[i] = bitwise("^", bitwise("^", bitwise("^", tmp[0], tmp[1]), tmp[2]), tmp[3])
+			end for
+			state[column] = endcolumn[0:]
+		end for
+		return state
+	end function
+	
+	// The actual algorithm
+	State = AddRoundKey(State, key, 10)
+	
+	for round in range(9, 1)
+		State = InvShiftRows(State)
+		State = [InvSubBytes(State[0]), InvSubBytes(State[1]), InvSubBytes(State[2]), InvSubBytes(State[3])]
+		State = AddRoundKey(State, key, round)
+		State = InvMixColumns(State)
+	end for
+	
+	State = InvShiftRows(State)
+	State = [InvSubBytes(State[0]), InvSubBytes(State[1]), InvSubBytes(State[2]), InvSubBytes(State[3])]
+	State = AddRoundKey(State, key, 0)
+	
+	return State
+end function
+
+
+key = ExpandKey(key)
+
+// Generate IV
+IV = []
+for column in key[0:4]
+	for byte in column
+		IV = IV + [floor(rnd(byte)*256)] // Warning: rnd is not cryptographically secure
+	end for
+end for
+
+hexTable = "0123456789abcdef"
+
+if choice == "encode" then
+	Blocks = [[]]
+	b=0
+	for char in text
+		Blocks[b] = Blocks[b] + [code(char)]
+		if Blocks[b].len == 16 then
+			Blocks = Blocks + [[]]
+			b=b+1
+		end if
+	end for
+	
+	// Pad with CMS (Crytographic Message Syntax)
+	padNum = 16 - Blocks[-1].len
+	for i in range(padNum-1)
+		Blocks[-1] = Blocks[-1] + [padNum]
+	end for
+	
+	// XOR first block with IV
+	for i in IV.indexes
+		Blocks[0][i] = bitwise("^", Blocks[0][i], IV[i])
+	end for
+	
+	// Format blocks
+	for i in Blocks.indexes
+		Blocks[i] = [Blocks[i][0:4], Blocks[i][4:8], Blocks[i][8:12], Blocks[i][12:16]]
+	end for
+	
+	// Encode blocks
+	Blocks[0] = aesEncode(key, Blocks[0])
+	if Blocks.len > 1 then
+		for i in range(1, Blocks.len-1)
+			for column in Blocks[i].indexes
+				for byte in Blocks[i][column].indexes
+					Blocks[i][column][byte] = bitwise("^", Blocks[i][column][byte], Blocks[i-1][column][byte])
+				end for
+			end for
+			Blocks[i] = aesEncode(key, Blocks[i])
+		end for
+	end if
+	
+	// Convert blocks to hex
+	output = ""
+	for Block in Blocks
+		for column in Block
+			for byte in column
+				for i in range(1)
+					output = output + hexTable[floor(byte/(16^i)) % 16]
+				end for
+			end for
+		end for
+	end for
+	return output
+end if
+
+if choice == "decode" then
+	if text.len % 32 != 0 then return null
+	
+	Blocks = [[]]
+	b=0
+	for i in range(0, text.len-1, 2)
+		first = hexTable.indexOf(text[i])
+		if first == null then return null
+		second = hexTable.indexOf(text[i+1])
+		if second == null then return null
+		if Blocks[b].len == 16 then
+			Blocks = Blocks + [[]]
+			b=b+1
+		end if
+		Blocks[b] = Blocks[b] + [first*16+second]
+	end for
+	
+	// Format blocks
+	for i in Blocks.indexes
+		Blocks[i] = [Blocks[i][0:4], Blocks[i][4:8], Blocks[i][8:12], Blocks[i][12:16]]
+	end for
+	
+	// Decode blocks
+	NewBlocks = Blocks[0:]
+	for i in Blocks.indexes
+		NewBlocks[i] = aesDecode(key, Blocks[i])
+	end for
+	
+	// XOR blocks
+	for column in Blocks[0].indexes
+		for byte in Blocks[i][column].indexes
+			NewBlocks[0][column][byte] = bitwise("^", NewBlocks[0][column][byte], IV[column*4+byte])
+		end for
+	end for
+	if Blocks.len > 1 then
+		for i in range(1, Blocks.len-1)
+			for column in Blocks[i].indexes
+				for byte in Blocks[i][column].indexes
+					NewBlocks[i][column][byte] = bitwise("^", NewBlocks[i][column][byte], Blocks[i-1][column][byte])
+				end for
+			end for
+		end for
+	end if
+	
+	Blocks = NewBlocks[0:]
+	
+	// Convert blocks to text
+	output = []
+	for Block in Blocks
+		for column in Block
+			for byte in column
+				output = output + [byte]
+			end for
+		end for
+	end for
+	if output[-1] > 16 or output[-1] == 0 then return null
+	for i in range(output[-1]-1)
+		output.pop
+	end for
+	result = ""
+	for byte in output
+		result = result + char(byte)
+	end for
+	return result
+end if
+
+return null
+end function
+
+
+usage = "Usages:\naes128 encode [key] [message]\naes128 decode [key] [cipher text]"
+cmds = ["encode", "decode"]
+if params.len != 3 then exit(usage)
+if cmds.indexOf(params[0]) == null then exit(usage)
+if params[1].len != 16 then exit("Error: Key must be 16 characters long.")
+exit("Result: "+AES(params[0], params[1], params[2]))
