@@ -2,6 +2,7 @@
 // Warning: A non-cryptographically secure random number generator is used
 // Only accepts 16-character keys
 // Encrypted text is in base64
+// No padding is used for the base64
 // Plaintext can be any length < 1,000,000
 
 // Two choices: "encode" or "decode"
