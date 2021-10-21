@@ -1,0 +1,80 @@
+// WARNING: This hash function is not secure, as it was created by me
+// I created this cryptographic hash function because others are too slow for GreyHack
+
+R1 = function(input) // Returns 240-bit hash
+	
+	// Blockify input
+	Blocks = [[]]
+	i=0
+	while i < input.len
+		Blocks[-1] = Blocks[-1] + [0]
+		e=6
+		while e > 0 and input.hasIndex(i)
+			e=e-1
+			Blocks[-1][-1] = Blocks[-1][-1] + code(input[i])*256^e
+			i=i+1
+		end while
+		if Blocks[-1].len == 10 then Blocks = Blocks + [[]]
+	end while
+	
+	// Padding
+	while Blocks[-1].len != 9
+		Blocks[-1] = Blocks[-1] + [0]
+	end while
+	// Add msg length at end
+	Blocks[-1] = Blocks[-1] + [input.len]
+	
+	
+	// 48-bit fractional parts of the square roots of the first 10 prime numbers
+	H = [116590752822204, 206053984011466, 66447228468884, 181762835242781, 89121955491302, 170447531158334, 34651153103681, 224006659490053]
+	H = H + [108414255117948, 159811460804720]
+	// A constant for mixing
+	C = (sqrt(5)-1)/2
+	
+	// Define functions
+	XOR = function(a, b)
+		return bitwise("^", floor(a/16777216), floor(b/16777216))*16777216+bitwise("^", a%16777216, b%16777216)
+	end function
+	
+	ROTR = function(num, rots)
+		rots = 2^rots
+		return (num % rots) * (281474976710656/rots) + floor(num/rots)
+	end function
+	
+	MIX = function(k)
+		return floor(281474976710656*((k*C)%1))
+	end function
+	
+	
+	// Message schedule
+	for Block in Blocks
+		W = range(109)
+		for i in H.indexes
+			W[i] = XOR(Block[i], H[i])
+		end for
+		
+		for i in range(10, 109)
+			W[i] = ( XOR(W[i-10], ROTR(W[i-8], 23)) + MIX(W[i-5]) ) % 281474976710656
+		end for
+		
+		for i in H.indexes
+			H[i] = W[109-i]
+		end for
+	end for
+	
+	// Compress H
+	binHash = []
+	for i in range(0,4)
+		binHash = binHash + [XOR(H[i], H[9-i])]
+	end for
+	
+	// Convert hash to hex
+	hexTable = "0123456789ABCDEF"
+	hash = ""
+	for num in binHash
+		for i in range(11)
+			hash = hash + hexTable[floor(num/16^i)%16]
+		end for
+	end for
+	return hash
+end function
