@@ -1,4 +1,4 @@
-input = params[0]  // Max input is 63,999,997 characters
+input = params[0]
 
 binaryEncode = function(num, bits)
 	result = []
