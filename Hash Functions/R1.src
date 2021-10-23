@@ -1,6 +1,7 @@
 // WARNING: This hash function is not offically secure, as it was created by me
 // I created this cryptographic hash function because others are too slow for GreyHack
-// Feel free to use it in your protocols
+// Each block (every 54 characters) takes about 0.004 seconds to hash
+// Feel free to use it in your protocols and scripts
 
 R1 = function(input) // Returns 240-bit hash
 	
