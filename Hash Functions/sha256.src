@@ -1,4 +1,4 @@
-input = params[0]
+SHA256 = function(input)
 
 binaryEncode = function(num, bits)
 	result = []
@@ -38,7 +38,7 @@ add = function(a, b)
 	carry = 0
 	result = []
 	for i in range(a.len-1)
-		result = [(a[i] != b[i]) != carry] + result  // ((a != b) != c) -> a xor b xor c
+		result = [(a[i] != b[i]) != carry] + result
 		if a[i]+b[i]+carry > 1 then carry = 1 else carry = 0
 	end for
 	return result
@@ -203,5 +203,5 @@ hash = ""
 for i in range(0, 252, 4)
 	hash = hash + hexTable[binaryDecode(binHash[i:i+4])]
 end for
-
-exit("Hash: "+hash+"\nHashed in "+time+" seconds.")
+return hash
+end function
