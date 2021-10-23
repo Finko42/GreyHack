@@ -1,5 +1,6 @@
-// WARNING: This hash function is not secure, as it was created by me
+// WARNING: This hash function is not offically secure, as it was created by me
 // I created this cryptographic hash function because others are too slow for GreyHack
+// Feel free to use it in your protocols
 
 R1 = function(input) // Returns 240-bit hash
 	
@@ -54,7 +55,7 @@ R1 = function(input) // Returns 240-bit hash
 		end for
 		
 		for i in range(10, 109)
-			W[i] = ( XOR(W[i-10], ROTR(W[i-8], 23)) + MIX(W[i-5]) ) % 281474976710656
+			W[i] = ( XOR(W[i-10], ROTR(W[i-8], 23)) + MIX(W[i-1]) ) % 281474976710656
 		end for
 		
 		for i in H.indexes
@@ -69,7 +70,7 @@ R1 = function(input) // Returns 240-bit hash
 	end for
 	
 	// Convert hash to hex
-	hexTable = "0123456789ABCDEF"
+	hexTable = "0123456789abcdef"
 	hash = ""
 	for num in binHash
 		for i in range(11)
