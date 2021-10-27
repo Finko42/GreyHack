@@ -6,8 +6,13 @@ mod_sub = function(m, s, mod)
 	return (((m - s) % mod) + mod) % mod
 end function
 
-mod_mult =function(x, y, mod)
+mod_mult = function(x, y, mod)
 	result = 0
+	if x < y then
+		tmp=y
+		y=x
+		x=tmp
+	end if
 	while x > 0 and y > 0
 		if y % 2 then result = (result + x) % mod
 		x = (x + x) % mod
@@ -16,18 +21,26 @@ mod_mult =function(x, y, mod)
 	return result
 end function
 
-mod_exp = function(b, e, mod)
-	result = 1
-	while e > 0
-		if e % 2 then result = mod_mult(b, result, mod)
-		e = floor(e/2)
-		b = mod_mult(b, b, mod)
-	end while
-	return result
-end function
-
 mod_inv = function(n, mod)
-	return mod_exp(n, mod-2, mod)
+	t = 0
+	new_t = 1
+	r = mod
+	new_r = n
+	
+	while new_r != 0
+		quotient = floor(r/new_r)
+		
+		tmp = new_t
+		new_t = t - quotient * new_t
+		t = tmp
+		
+		tmp = new_r
+		new_r = r - quotient * new_r
+		r = tmp
+	end while
+	
+	if t < 0 then t = t + mod
+	return t
 end function
 
 
