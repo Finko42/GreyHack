@@ -1,3 +1,6 @@
+// WARNING: This implementation can be cracked instantly and easily
+// DO NOT USE FOR ACTUAL SECURITY
+
 gcd = function(a, b)
 	if a < b then return gcd(b, a)
 	if a % b == 0 then return b
