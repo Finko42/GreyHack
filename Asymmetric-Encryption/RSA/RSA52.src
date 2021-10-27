@@ -1,0 +1,96 @@
+gcd = function(a, b)
+	if a < b then return gcd(b, a)
+	if a % b == 0 then return b
+	return gcd(b, a % b)
+end function
+
+mod_mult = function(x, y, mod)
+	result = 0
+	if x < y then
+		tmp=y
+		y=x
+		x=tmp
+	end if
+	while y > 0
+		if y % 2 then result = (result + x) % mod
+		x = (x + x) % mod
+		y = floor(y/2)
+	end while
+	return result
+end function
+
+mod_exp = function(b, e, mod)
+	result = 1
+	while e > 0
+		if e % 2 then result = mod_mult(b, result, mod)
+		e = floor(e/2)
+		b = mod_mult(b, b, mod)
+	end while
+	return result
+end function
+
+mod_inv = function(n, mod)
+	t = 0
+	new_t = 1
+	r = mod
+	new_r = n
+	
+	while new_r != 0
+		quotient = floor(r/new_r)
+		
+		tmp = new_t
+		new_t = t - quotient * new_t
+		t = tmp
+		
+		tmp = new_r
+		new_r = r - quotient * new_r
+		r = tmp
+	end while
+	
+	if t < 0 then t = t + mod
+	return t
+end function
+
+is_prime = function(n, k) // Higher k means higher probability of n being prime
+	while k > 0
+		a = 2 + floor(rnd*(n-4))
+		if gcd(n, a) != 1 then return false
+		if mod_exp(a, n-1, n) != 1 then return false
+		k=k-1
+	end while
+	return true
+end function
+
+
+gen_keys = function()
+	p = bitwise("|", floor(rnd*67108864), 33554433)
+	while not is_prime(p, 100)
+		p = bitwise("|", floor(rnd*67108864), 33554433)
+	end while
+	q = bitwise("|", floor(rnd*67108864), 33554433)
+	while not is_prime(q, 100)
+		q = bitwise("|", floor(rnd*67108864), 33554433)
+	end while
+	
+	N = p*q
+	Phi_N = (p-1)*(q-1)
+	e = 3
+	while gcd(e, Phi_N) != 1
+		e=e+2
+	end while
+	d = mod_inv(e, Phi_N)
+	
+	print("Private key: d = "+floor(d/100)+(d%100))
+	print("Public key: n = "+floor(N/100)+(N%100)+", e = "+e)
+	exit("Time: "+time+" seconds.")
+end function
+
+// Encryption - m^e mod n
+// Decryption - c^d mod n
+
+usage = "Usage:\nRSA gen-keys\nRSA encrypt [message num] [e] [n]\nRSA decrypt [cipher num] [private key] [n]"
+if params.len == 0 then exit(usage)
+if params[0] == "gen-keys" then gen_keys()
+if params[0] == "encrypt" then exit("Result: "+mod_exp(params[1].val, params[2].val, params[3].val))
+if params[0] == "decrypt" then exit("Result: "+mod_exp(params[1].val, params[2].val, params[3].val))
+exit(usage)
