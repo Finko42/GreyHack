@@ -2,6 +2,7 @@ SHA256 = function(input)
 	
 	Blocks = [[0]]
 	i=0
+	e=0
 	while i < input.len
 		e=4
 		while e > 0 and input.hasIndex(i)
