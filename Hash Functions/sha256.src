@@ -1,207 +1,141 @@
 SHA256 = function(input)
-
-binaryEncode = function(num, bits)
-	result = []
-	for i in range(0, bits-1)
-		result = [floor(num/(2^i)) % 2] + result
-	end for
-	return result
-end function
-
-Blocks = [[]]
-i=0
-for char in input
-	if Blocks[i].len == 512 then
-		Blocks = Blocks + [[]]
-		i=i+1
+	
+	Blocks = [[0]]
+	i=0
+	while i < input.len
+		e=4
+		while e > 0 and input.hasIndex(i)
+			e=e-1
+			Blocks[-1][-1] = Blocks[-1][-1] + code(input[i])*256^e
+			i=i+1
+		end while
+		if e == 0 then
+			if Blocks[-1].len == 16 then Blocks = Blocks + [[0]] else Blocks[-1] = Blocks[-1] + [0]
+		end if
+	end while
+	
+	if e > 0 then
+		Blocks[-1][-1] = Blocks[-1][-1] + (2147483648/256^(4-e))
+	else
+		Blocks[-1][-1] = 2147483648
 	end if
-	Blocks[i] = Blocks[i] + binaryEncode(code(char), 8)
-end for
-
-msgLen = 0
-for Block in Blocks
-	msgLen = msgLen + Block.len
-end for
-
-if Blocks[-1].len == 512 then Blocks = Blocks + [[]]
-Blocks[-1] = Blocks[-1] + [1]
-
-while Blocks[-1].len != 489
-	if Blocks[-1].len == 512 then Blocks = Blocks + [[]]
-	Blocks[-1] = Blocks[-1] + [0]
-end while
-
-Blocks[-1] = Blocks[-1] + binaryEncode(msgLen, 23)  // Normally this is 64 bits but the max list size is 1 million
-
-
-add = function(a, b)
-	carry = 0
-	result = []
-	for i in range(a.len-1)
-		result = [(a[i] != b[i]) != carry] + result
-		if a[i]+b[i]+carry > 1 then carry = 1 else carry = 0
-	end for
-	return result
-end function
-
-Ch = function(x, y, z)
-	result = []
-	for i in x.indexes
-		result = result + [(x[i] and y[i]) or ((not x[i]) and z[i])]
-	end for
-	return result
-end function
-
-Maj = function(x, y, z)
-	result = []
-	for i in x.indexes
-		result = result + [(x[i] and y[i]) or (x[i] and z[i]) or (y[i] and z[i])]
-	end for
-	return result
-end function
-
-rotr = function(bits, iter)
-	bits = bits[0:]
-	for i in range(iter-1)
-		r = bits.pop
-		bits = [r] + bits
-	end for
-	return bits
-end function
-
-shr = function(bits, shifts)
-	bits = bits[0:]
-	for i in range(shifts-1)
-		bits.pop
-		bits = [0] + bits
-	end for
-	return bits
-end function
-
-sigma0 = function(x)
-	a = rotr(x, 7)
-	b = rotr(x, 18)
-	c = shr(x, 3)
-	result = []
-	for i in x.indexes
-		result = result + [(a[i] != b[i]) != c[i]]
-	end for
-	return result
-end function
-
-sigma1 = function(x)
-	a = rotr(x, 17)
-	b = rotr(x, 19)
-	c = shr(x, 10)
-	result = []
-	for i in x.indexes
-		result = result + [(a[i] != b[i]) != c[i]]
-	end for
-	return result
-end function
-
-SIGMA0 = function(x)
-	a = rotr(x, 2)
-	b = rotr(x, 13)
-	c = rotr(x, 22)
-	result = []
-	for i in x.indexes
-		result = result + [(a[i] != b[i]) != c[i]]
-	end for
-	return result
-end function
-
-SIGMA1 = function(x)
-	a = rotr(x, 6)
-	b = rotr(x, 11)
-	c = rotr(x, 25)
-	result = []
-	for i in x.indexes
-		result = result + [(a[i] != b[i]) != c[i]]
-	end for
-	return result
-end function
-
-Kvalues=[]
-Kvalues = Kvalues + [1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221]
-Kvalues = Kvalues + [3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580]
-Kvalues = Kvalues + [3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986]
-Kvalues = Kvalues + [2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895]
-Kvalues = Kvalues + [666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037]
-Kvalues = Kvalues + [2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344]
-Kvalues = Kvalues + [430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779]
-Kvalues = Kvalues + [1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298]
-K = []
-for value in Kvalues
-	K = K + [binaryEncode(value, 32)]
-end for
-
-Hvalues = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225]
-H = []
-for value in Hvalues
-	H = H + [binaryEncode(value, 32)]
-end for
-
-for Block in Blocks
-	W = []
-	for i in range(0, 480, 32)
-		W = W + [Block[i:i+32]]
+	
+	if Blocks[-1].len == 16 then Blocks = Blocks + [[0]]
+	while Blocks[-1].len != 15
+		Blocks[-1] = Blocks[-1] + [0]
+	end while
+	
+	Blocks[-1] = Blocks[-1] + [input.len*8]
+	
+	add = function(a, b)
+		return (a + b) % 4294967296
+	end function
+	
+	XOR = function(a, b)
+		return bitwise("^", floor(a/65536), floor(b/65536))*65536+bitwise("^", a%65536, b%65536)
+	end function
+	
+	AND = function(a, b)
+		return bitwise("&", floor(a/65536), floor(b/65536))*65536+bitwise("&", a%65536, b%65536)
+	end function
+	
+	OR = function(a, b)
+		return bitwise("|", floor(a/65536), floor(b/65536))*65536+bitwise("|", a%65536, b%65536)
+	end function
+	
+	NOT = function(n)
+		return 4294967295-n
+	end function
+	
+	Ch = function(x, y, z)
+		return OR(AND(x, y), AND(NOT(x), z))
+	end function
+	
+	Maj = function(x, y, z)
+		return OR(OR(AND(x, y), AND(x, z)), AND(y, z))
+	end function
+	
+	shr = function(n, shifts)
+		return floor(n/2^shifts)
+	end function
+	
+	rotr = function(n, rots)
+		rots = 2^rots
+		return (n % rots) * (4294967296/rots) + floor(n/rots)
+	end function
+	
+	sigma0 = function(n)
+		return XOR(XOR(rotr(n, 7), rotr(n, 18)), shr(n, 3))
+	end function
+	
+	sigma1 = function(n)
+		return XOR(XOR(rotr(n, 17), rotr(n, 19)), shr(n, 10))
+	end function
+	
+	SIGMA0 = function(n)
+		return XOR(XOR(rotr(n, 2), rotr(n, 13)), rotr(n, 22))
+	end function
+	
+	SIGMA1 = function(n)
+		return XOR(XOR(rotr(n, 6), rotr(n, 11)), rotr(n, 25))
+	end function
+	
+	K = []
+	K = K + [1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221]
+	K = K + [3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580]
+	K = K + [3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986]
+	K = K + [2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895]
+	K = K + [666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037]
+	K = K + [2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344]
+	K = K + [430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779]
+	K = K + [1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298]
+	
+	H = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225]
+	
+	for Block in Blocks
+		W = Block[0:]
+		
+		for i in range(16, 63)
+			W = W + [add(add(add(sigma1(W[i-2]), W[i-7]), sigma0(W[i-15])), W[i-16])]
+		end for
+		
+		a = H[0]
+		b = H[1]
+		c = H[2]
+		d = H[3]
+		e = H[4]
+		f = H[5]
+		g = H[6]
+		h = H[7]
+		
+		for i in range(0, 63)
+			T1 = add(add(add(add(SIGMA1(e), Ch(e, f, g)), h), K[i]), W[i])
+			T2 = add(SIGMA0(a), Maj(a, b, c))
+			h = g
+			g = f
+			f = e
+			e = add(d, T1)
+			d = c
+			c = b
+			b = a
+			a = add(T1, T2)
+		end for
+		H[0] = add(a, H[0])
+		H[1] = add(b, H[1])
+		H[2] = add(c, H[2])
+		H[3] = add(d, H[3])
+		H[4] = add(e, H[4])
+		H[5] = add(f, H[5])
+		H[6] = add(g, H[6])
+		H[7] = add(h, H[7])
 	end for
 	
-	for i in range(16, 63)
-		W = W + [add(add(add(sigma1(W[i-2]), W[i-7]), sigma0(W[i-15])), W[i-16])]
+	hexTable = "0123456789abcdef"
+	hash = ""
+	for i in H.indexes
+		for j in range(7)
+			hash = hash + hexTable[floor(H[i]/16^j) % 16]
+		end for
 	end for
-	
-	a = H[0]
-	b = H[1]
-	c = H[2]
-	d = H[3]
-	e = H[4]
-	f = H[5]
-	g = H[6]
-	h = H[7]
-	
-	for i in range(0, 63)
-		T1 = add(add(add(add(SIGMA1(e), Ch(e, f, g)), h), K[i]), W[i])
-		T2 = add(SIGMA0(a), Maj(a, b, c))
-		h = g
-		g = f
-		f = e
-		e = add(d, T1)
-		d = c
-		c = b
-		b = a
-		a = add(T1, T2)
-	end for
-	H[0] = add(a, H[0])
-	H[1] = add(b, H[1])
-	H[2] = add(c, H[2])
-	H[3] = add(d, H[3])
-	H[4] = add(e, H[4])
-	H[5] = add(f, H[5])
-	H[6] = add(g, H[6])
-	H[7] = add(h, H[7])
-end for
-
-binHash = []
-for i in H.indexes
-	binHash = binHash + H[i]
-end for
-
-binaryDecode = function(bits)
-	bits = bits[0:]
-	bits.reverse
-	result = 0
-	for i in bits.indexes
-		if bits[i] then result = result + 2^i
-	end for
-	return result
-end function
-
-hexTable = "0123456789abcdef"
-hash = ""
-for i in range(0, 252, 4)
-	hash = hash + hexTable[binaryDecode(binHash[i:i+4])]
-end for
-return hash
+	return hash
 end function
