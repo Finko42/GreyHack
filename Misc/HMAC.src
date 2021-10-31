@@ -1,0 +1,32 @@
+// Key and message are strings
+// Hash is the desired hash function (pass using @func)
+// blockSize is the block size of the hash function in bytes
+
+HMAC = function(key, message, hash, blockSize)
+	
+	hex2ascii = function(hex_num)
+		hexTable = "0123456789abcdef"
+		result = ""
+		for i in range(hex_num.len-1, 0, -2)
+			tmp = hexTable.indexOf(hex_num[i])
+			if i > 0 then tmp = hexTable.indexOf(hex_num[i-1])*16 + tmp
+			result = char(tmp) + result
+		end for
+		return result
+	end function
+	
+	if key.len > blockSize then key = hex2ascii(hash(key))
+	
+	while key.len < blockSize
+		key = key + char(0)
+	end while
+	
+	o_key_pad = ""
+	i_key_pad = ""
+	for i in range(0, blockSize-1)
+		o_key_pad = o_key_pad + char(bitwise("^", key[i].code, 92))
+		i_key_pad = i_key_pad + char(bitwise("^", key[i].code, 54))
+	end for
+	
+	return hash(o_key_pad + hex2ascii(hash(i_key_pad + message)))
+end function
