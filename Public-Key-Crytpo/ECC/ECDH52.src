@@ -106,15 +106,18 @@ end function
 gen_keys = function()
 	private_key = floor(rnd * 2^52)
 	if private_key < 2^51 then private_key = private_key + 2^51 // To help prevent timing attacks
-	print("Private Key: 0x"+dec2hex(private_key))
 	public_key = scalar_mult(private_key, Curve.G)
-	exit("Public Key: (0x"+dec2hex(public_key.x)+", 0x"+dec2hex(public_key.y)+")")
+	return {"private":private_key, "public":public_key} // Remember public key is a point
 end function
 
 usage = "Usage:\nECDH52 gen-keys\nECDH52 sharedsecret <your private key> <friend's public key>"
 if params.len > 0 then
 	if params[0] == "-h" then exit(usage)
-	if params[0] == "gen-keys" then gen_keys()
+	
+	if params[0] == "gen-keys" then
+		keys = gen_keys()
+		exit("Private key: 0x"+dec2hex(keys.private)+"\nPublic Key: (0x"+dec2hex(keys.public.x)+", 0x"+dec2hex(keys.public.y)+")")
+	end if
 	
 	if params[0] == "sharedsecret" then
 		ss = scalar_mult(hex2dec(params[1]), {"x":hex2dec(params[2]), "y":hex2dec(params[3])})
