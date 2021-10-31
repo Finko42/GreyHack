@@ -3,10 +3,10 @@
 // This implementation does not produce the same hashes as its real life equivalent
 // but it still works fine as a speedy and low collision hash function
 
-FNV1a = function(input)  // Returns a 32-bit hash of input string (as an integer)
+FNV1a = function(input)  // Returns a 32-bit hash of input string
 	hash = 2166136261
 	for byte in input
-		hash = (bitwise("^", hash, code(byte)) * 16777619) % 4294967296
+		hash = (((hash-(hash%256))+bitwise("^", hash%256, byte.code)) * 16777619) % 4294967296
 	end for
-	return abs(hash)
+	return hash
 end function
