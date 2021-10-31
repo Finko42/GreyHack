@@ -4,39 +4,37 @@
 // Define the curve
 curve = {"a":0, "b":7, "n":94906249, "G":{"x":87908601, "y":6225285}, "p":94906249} // p = floor(sqrt(2^53)) - 16
 // Uses a and b from secp256k1
-// y^2 = x^3 + ax + b  <- the curve equation (Weierstrass curve)
-// n is order of curve (how many points on it)
-// n is not correct here but it doesn't matter (also good luck calculating it)
+// y^2 = x^3 + ax + b  <- the curve equation (short Weierstrass curve)
 // G is the base point (just a random point)
 // p is the finite field number (must be prime)
 // Feel free to modidify curve parameters (if you know what you're doing)
 
-bit_size = 27 // Based on bit length of n
-
 // The main elliptic curve math functions
 // Points are represented using maps with x and y as indexes -> {"x":0, "y":0}
-modInverse = function(n, p)  // Returns multiplicative inverse of n mod p
-	if n < 0 then return p - modInverse(-n, p)
+mod_sub = function(m, s, mod)
+	return (((m - s) % mod) + mod) % mod
+end function
+
+modInverse = function(n, mod)
+	t = 0
+	new_t = 1
+	r = mod
+	new_r = n
 	
-	s = 0
-	old_s = 1
-	r = p
-	old_r = n
-	
-	while r != 0
-		quotient = floor(old_r/r)
+	while new_r != 0
+		quotient = floor(r/new_r)
 		
-		tmp = r
-		r = old_r - quotient * r
-		old_r = tmp
+		tmp = new_t
+		new_t = t - quotient * new_t
+		t = tmp
 		
-		tmp = s
-		s = old_s - quotient * s
-		old_s = tmp
+		tmp = new_r
+		new_r = r - quotient * new_r
+		r = tmp
 	end while
 	
-	old_s = old_s % p
-	if old_s < 0 then return old_s + p else return old_s
+	if t < 0 then t = t + mod
+	return t
 end function
 
 point_add = function(p1, p2)
@@ -46,14 +44,12 @@ point_add = function(p1, p2)
 	if p1 == p2 then
 		m = ((((((3 * ((p1.x * p1.x) % curve.p)) % curve.p) + curve.a) % curve.p)) * modInverse((2 * p1.y) % curve.p, curve.p)) % curve.p
 	else
-		m = (((p1.y - p2.y) % curve.p) * modInverse((p1.x - p2.x) % curve.p, curve.p)) % curve.p
+		m = (mod_sub(p1.y, p2.y, curve.p) * modInverse(mod_sub(p1.x, p2.x, curve.p), curve.p)) % curve.p
 	end if
 	
 	p3 = {"x":0, "y":0}
-	p3.x = (((((m * m) % curve.p) - p1.x) % curve.p) - p2.x) % curve.p
-	if p3.x < 0 then p3.x = p3.x + curve.p
-	p3.y = -(p1.y + ((m * ((p3.x - p1.x) % curve.p)) % curve.p)) % curve.p
-	if p3.y < 0 then p3.y = p3.y + curve.p
+	p3.x = mod_sub(mod_sub((m * m) % curve.p, p1.x, curve.p), p2.x, curve.p)
+	p3.y = mod_sub(0, p1.y + ((m * mod_sub(p3.x, p1.x, curve.p)) % curve.p), curve.p)
 	
 	return p3
 end function
@@ -72,49 +68,24 @@ scalar_mult = function(n, P)
 end function
 
 
-// Functions for keys
-hex = function(num)
-	hexTable = "0123456789abcdef"
-	result = ""
-	
-	for i in range(0, floor(globals.bit_size/4))
-		result = hexTable[floor(num/(16^i)) % 16] + result
-	end for
-	
-	return result
-end function
-
-hex2int = function(str)
-	hexTable = {"a":10, "b":11, "c":12, "d":13, "e":14, "f":15}
-	result = 0
-	str = str.values
-	str.reverse
-	str = str.join("")
-	
-	for i in str.indexes
-		if typeof(str[i].to_int) == "number" then result = result + 16^i * str[i].to_int
-		if hexTable.hasIndex(str[i]) then result = result + 16^i * hexTable[str[i]]
-	end for
-	
-	return result
-end function
-
 gen_keys = function()
-	private_key = floor(rnd * curve.n)+1
-	print("Private Key: 0x"+hex(private_key))
+	private_key = floor(rnd * curve.p)+1
 	public_key = scalar_mult(private_key, curve.G)
-	exit("Public Key: (0x"+hex(public_key.x)+", 0x"+hex(public_key.y)+")")
+	return {"private":private_key, "public":public_key}
 end function
 
-usage = "Usage:\nECDH27 gen-keys\nECDH27 sharedsecret <your private key> <friend's public key>"
+usage = "Usage:\nECDHE27 gen-keys\nECDHE27 sharedsecret <your private key> <friend's public key>"
 if params.len > 0 then
 	if params[0] == "-h" then exit(usage)
 	
-	if params[0] == "gen-keys" then gen_keys()
+	if params[0] == "gen-keys" then
+		keys = gen_keys()
+		exit("Private Key: "+keys.private+"\nPublic Key: ("+keys.public.x+", "+keys.public.y+")")
+	end if
 
 	if params[0] == "sharedsecret" then
-		ss = scalar_mult(hex2int(params[1]), {"x":hex2int(params[2]), "y":hex2int(params[3])})
-		exit("Shared secret: (0x"+hex(ss.x)+", 0x"+hex(ss.y)+")")
+		ss = scalar_mult(params[1].to_int, {"x":params[2].to_int, "y":params[3].to_int})
+		exit("Shared secret: ("+ss.x+", "+ss.y+")")
 	end if
 end if
 exit(usage)
