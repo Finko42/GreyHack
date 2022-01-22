@@ -1,0 +1,28 @@
+to_unix_time = function(date)
+date = date.split(" ")
+Date = date[0].split("-")
+Time = date[1].split(":")
+
+current_year = Date[2].val
+start_year = 1970
+days=0
+
+while start_year != current_year
+	if ((start_year % 400) == 0) or (((start_year % 4) == 0) and ((start_year % 100) != 0)) then days=days+366 else days=days+365
+	start_year=start_year+1
+end while
+
+months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+current_month = Date[1].val
+index=1
+
+while index != current_month
+	days=days+months[index-1]
+	if index == 2 then
+		if ((current_year % 400) == 0) or (((current_year % 4) == 0) and ((current_year % 100) != 0)) then days=days+1
+	end if
+	index=index+1
+end while
+
+return (((days+Date[0].val-1) * 24 + Time[0].val) * 60 + Time[1].val) * 4  // 1 ingame minute = 4 real life seconds
+end function
