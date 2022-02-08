@@ -1,7 +1,8 @@
 // ElGamal signature scheme
 // You sign messages with your private key
 // You verify signatures with the sender's public key
-// WARNING: I have no idea how secure or unsecure this implementation is
+// WARNING: This implementation is unsecure and can be cracked using a discrete logarithm calculator
+// DO NOT USE FOR ACTUAL SECURITY
 
 gcd = function(a, b)
 	if a < b then return gcd(b, a)
