@@ -1,6 +1,6 @@
 // This uses CBC
 // Warning: A non-cryptographically secure random number generator is used
-// Key is a list of 16 bytes
+// Key is a string of 16 characters
 // Encrypted text is in base64
 // No padding is used for the base64
 // Plaintext can be any length < 1,000,000
@@ -8,13 +8,16 @@
 // Two choices: "encrypt" or "decrypt"
 AES128 = function(choice, key, text) // Returns null if any error (could mean undecryptable ciphertext)
 
-if typeof(key) != "list" then return null
+if typeof(key) != "string" then return null
 if key.len != 16 then return null
-// Key must be a list of 16 bytes
-key = key[0:]
-
 if typeof(text) != "string" then return null
 if typeof(choice) != "string" then return null
+
+byte_key = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+for i in key.indexes
+    byte_key[i] = key[i].code
+end for
+key = byte_key[0:]
 
 // Define lookup tables
 SBox = []
@@ -425,13 +428,7 @@ if params.len != 3 then exit(usage)
 if cmds.indexOf(params[0]) == null then exit(usage)
 if params[1].len != 16 then exit("Error: Key must be 16 characters long.")
 
-// Convert key into ascii bytes
-byteKey = []
-for c in params[1]
-	byteKey = byteKey + [code(c)]
-end for
-
-r = AES128(params[0], byteKey, params[2])
+r = AES128(params[0], params[1], params[2])
 if typeof(r) == "null" then r = "Error"
 print("Result: "+r)
 print("Time: "+time+" seconds.")
